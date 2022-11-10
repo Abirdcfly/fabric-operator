@@ -50,6 +50,7 @@ network up
 
 kubectl -n test-network get all
 
+network console
 
 # Chaincode: general
 
