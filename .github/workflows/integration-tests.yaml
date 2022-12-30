@@ -19,7 +19,7 @@ name: Integration Test
 
 on:
   push:
-    branches: [main]
+    branches: [main, testca]
   pull_request:
     branches: [main]
 
