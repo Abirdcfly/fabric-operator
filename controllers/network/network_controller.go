@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -54,6 +53,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -257,7 +257,7 @@ func (r *ReconcileNetwork) SetStatus(instance *current.Network, reconcileStatus 
 			status.Status = current.True
 			status.Reason = reconcileStatus.Reason
 			status.Message = reconcileStatus.Message
-			status.LastHeartbeatTime = time.Now().String()
+			status.LastHeartbeatTime = v1.Now()
 
 			instance.Status = current.NetworkStatus{
 				CRStatus: status,
@@ -296,7 +296,7 @@ func (r *ReconcileNetwork) SetErrorStatus(instance *current.Network, reconcileEr
 	status.Status = current.True
 	status.Reason = "errorOccurredDuringReconcile"
 	status.Message = reconcileErr.Error()
-	status.LastHeartbeatTime = time.Now().String()
+	status.LastHeartbeatTime = v1.Now()
 	status.ErrorCode = operatorerrors.GetErrorCode(reconcileErr)
 
 	instance.Status = current.NetworkStatus{

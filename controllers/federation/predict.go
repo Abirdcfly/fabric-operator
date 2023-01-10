@@ -166,6 +166,13 @@ func (r *ReconcileFederation) ProposalUpdateFunc(e event.UpdateEvent) bool {
 	}
 
 	if newProposal.Status.Phase == current.ProposalFinished {
+		fed := &current.Federation{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: newProposal.Spec.Federation}, fed); err != nil {
+			log.Error(err, fmt.Sprintf("cant find federation %s", newProposal.Spec.Federation))
+			return false
+		}
+		now := metav1.Now()
+		newMember := make([]current.Member, 0)
 		for _, c := range newProposal.Status.Conditions {
 			if c.Status == metav1.ConditionTrue {
 				if newProposal.Spec.CreateFederation != nil {
@@ -174,68 +181,50 @@ func (r *ReconcileFederation) ProposalUpdateFunc(e event.UpdateEvent) bool {
 						update.proposalFailed = true
 					case current.ProposalSucceeded:
 						update.proposalActivated = true
+						for _, m := range fed.Spec.Members {
+							m.JoinedBy = newProposal.GetName()
+							m.JoinedAt = now
+							newMember = append(newMember, m)
+						}
 					}
 				} else if newProposal.Spec.AddMember != nil {
 					if c.Type == current.ProposalSucceeded {
-						fed := &current.Federation{}
-						if err := r.client.Get(context.TODO(), types.NamespacedName{Name: newProposal.Spec.Federation}, fed); err != nil {
-							log.Error(err, fmt.Sprintf("cant find federation %s", newProposal.Spec.Federation))
-							return false
-						}
+						newMember = append(newMember, fed.Spec.Members...)
 						for _, m := range newProposal.Spec.AddMember.Members {
-							fed.Spec.Members = append(fed.Spec.Members, current.Member{
+							newMember = append(newMember, current.Member{
 								NamespacedName: m,
 								Initiator:      false,
+								JoinedBy:       newProposal.GetName(),
+								JoinedAt:       now,
 							})
-						}
-						if err := r.client.Update(context.TODO(), fed); err != nil {
-							log.Error(err, fmt.Sprintf("cant update federation %s", newProposal.Spec.Federation))
-							return false
 						}
 					}
 				} else if newProposal.Spec.DeleteMember != nil {
 					if c.Type == current.ProposalSucceeded {
-						fed := &current.Federation{}
-						if err := r.client.Get(context.TODO(), types.NamespacedName{Name: newProposal.Spec.Federation}, fed); err != nil {
-							log.Error(err, fmt.Sprintf("cant find federation %s", newProposal.Spec.Federation))
-							return false
-						}
-						newMember := make([]current.Member, 0)
 						for _, m := range fed.Spec.Members {
 							if m.String() == newProposal.Spec.DeleteMember.Member.String() {
 								continue
 							}
 							newMember = append(newMember, m)
 						}
-						fed.Spec.Members = newMember
-						if err := r.client.Update(context.TODO(), fed); err != nil {
-							log.Error(err, fmt.Sprintf("cant update federation %s", newProposal.Spec.Federation))
-							return false
-						}
 					}
 				} else if newProposal.Spec.DissolveFederation != nil {
 					if c.Type == current.ProposalSucceeded {
 						update.proposalDissolved = true
-						fed := &current.Federation{}
-						if err := r.client.Get(context.TODO(), types.NamespacedName{Name: newProposal.Spec.Federation}, fed); err != nil {
-							log.Error(err, fmt.Sprintf("cant find federation %s", newProposal.Spec.Federation))
-							return false
-						}
-						newMember := make([]current.Member, 0)
 						for _, m := range fed.Spec.Members {
 							if !m.Initiator {
 								continue
 							}
 							newMember = append(newMember, m)
 						}
-						fed.Spec.Members = newMember
-						if err := r.client.Update(context.TODO(), fed); err != nil {
-							log.Error(err, fmt.Sprintf("cant update federation %s", newProposal.Spec.Federation))
-							return false
-						}
 					}
 				}
 			}
+		}
+		fed.Spec.Members = newMember
+		if err := r.client.Update(context.TODO(), fed); err != nil {
+			log.Error(err, fmt.Sprintf("cant update federation %s", newProposal.Spec.Federation))
+			return false
 		}
 	}
 	if !(update.proposalDissolved || update.proposalActivated || update.proposalFailed) {
