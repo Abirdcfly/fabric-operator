@@ -79,7 +79,7 @@ context ORDERER_IMAGE_LABEL       ${FABRIC_VERSION}
 context TOOLS_IMAGE               ${FABRIC_CONTAINER_REGISTRY}/fabric-tools
 context TOOLS_IMAGE_LABEL         ${FABRIC_VERSION}
 context OPERATOR_IMAGE            ${FABRIC_CONTAINER_REGISTRY}/fabric-operator
-context OPERATOR_IMAGE_LABEL      latest-amd64
+context OPERATOR_IMAGE_LABEL      latest
 context INIT_IMAGE                ${FABRIC_CONTAINER_REGISTRY}/ubi-minimal
 context INIT_IMAGE_LABEL          latest
 context GRPCWEB_IMAGE             ${FABRIC_CONTAINER_REGISTRY}/grpc-web
