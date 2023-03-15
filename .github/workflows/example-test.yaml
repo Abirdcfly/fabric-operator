@@ -45,6 +45,11 @@ jobs:
         with:
           key: operator.image-${{ github.sha }}
           path: /tmp/operator.image.tar
+      - name: get operator image
+        uses: actions/upload-artifact@v3
+        with:
+          name: operator
+          path: /tmp/operator.image.tar
 
   example-test:
     needs:
@@ -85,6 +90,13 @@ jobs:
         uses: actions/cache/save@v3
         with:
           key: component-image-cache-${{ github.sha }}
+          path: |
+            /tmp/all.image.tar
+            /tmp/all.image.list
+      - name: get other images
+        uses: actions/upload-artifact@v3
+        with:
+          name: other
           path: |
             /tmp/all.image.tar
             /tmp/all.image.list
