@@ -42,5 +42,7 @@ informer-gen \
 # FIXME: this may be fixed by set right arg in client-gen or informer-gen ?
 find pkg/generated/informers -type f -exec sed -i.bak 's/IbpV1beta1/Ibp/g' {} +
 find pkg/generated/informers -type f -name '*.bak' -delete
+find pkg/generated/clientset -type f -exec sed -i.bak 's/schema.GroupVersion{Version: "v1"}/schema.GroupVersion{Version: "v1beta1"}/g' {} +
+find pkg/generated/clientset -type f -name '*.bak' -delete
 
 echo "codegen done."
